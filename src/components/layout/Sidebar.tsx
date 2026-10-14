@@ -21,8 +21,10 @@ import {
   X,
   ShieldCheck,
   ShieldAlert,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { RoleMode } from '@/types/crm';
+import { PRECONFIGURED_USERS, UserRole, AuthUser } from '@/types/auth';
 
 interface SidebarProps {
   currentTab: string;
@@ -31,6 +33,9 @@ interface SidebarProps {
   onCloseMobile: () => void;
   roleMode?: RoleMode;
   onToggleRoleMode?: (newMode: RoleMode) => void;
+  currentUser?: AuthUser;
+  onSwitchAccount?: (role: UserRole) => void;
+  onSignOut?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -40,8 +45,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCloseMobile,
   roleMode = 'admin',
   onToggleRoleMode,
+  currentUser,
+  onSwitchAccount,
+  onSignOut,
 }) => {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const activeUser = currentUser || PRECONFIGURED_USERS[roleMode as UserRole] || PRECONFIGURED_USERS.admin;
 
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -150,88 +159,148 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </nav>
         </div>
 
-        {/* Bottom Profile Card */}
+        {/* Bottom Profile Card & Account Switcher */}
         <div className="relative pt-4 border-t border-slate-100">
           {userDropdownOpen && (
-            <div className="absolute bottom-20 left-1 right-1 z-50 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl ring-1 ring-black/5 animate-in fade-in slide-in-from-bottom-2 duration-150">
-              <div className="px-3 py-2 border-b border-slate-100">
-                <p className="text-xs font-bold text-slate-900">
-                  {roleMode === 'admin' ? 'Administrator' : 'Staff Stylist'}
-                </p>
-                <p className="text-[11px] text-slate-400 truncate">admin@regularsalon.pk</p>
+            <div className="absolute bottom-20 left-1 right-1 z-50 rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl ring-1 ring-black/5 animate-in fade-in slide-in-from-bottom-2 duration-150">
+              {/* Active User Header */}
+              <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-50 border border-slate-100 mb-2">
+                <img
+                  src={activeUser.avatar}
+                  alt={activeUser.name}
+                  className="h-10 w-10 rounded-full object-cover ring-2 ring-white shadow-xs shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-slate-900 truncate">{activeUser.name}</p>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
+                        activeUser.role === 'admin'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-blue-50 text-blue-700 border border-blue-200'
+                      }`}
+                    >
+                      {activeUser.role === 'admin' ? 'Administrator' : 'Staff Stylist'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 truncate mt-0.5">{activeUser.email}</p>
+                </div>
               </div>
 
-              {onToggleRoleMode && (
-                <button
-                  onClick={() => {
-                    onToggleRoleMode(roleMode === 'admin' ? 'staff' : 'admin');
-                    setUserDropdownOpen(false);
-                  }}
-                  className="mt-1 flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-bold text-slate-800 hover:bg-slate-100"
-                >
-                  <div className="flex items-center gap-2">
-                    {roleMode === 'admin' ? (
-                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                    ) : (
-                      <ShieldAlert className="h-3.5 w-3.5 text-blue-600" />
-                    )}
-                    <span>Switch Role View</span>
-                  </div>
-                  <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[9px] font-bold">
-                    {roleMode === 'admin' ? 'Staff' : 'Admin'}
-                  </span>
-                </button>
-              )}
+              {/* Account Switcher Options */}
+              <div className="space-y-1 mb-2">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">
+                  Switch Account
+                </span>
+
+                {activeUser.role === 'admin' ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSwitchAccount?.('staff');
+                      setUserDropdownOpen(false);
+                    }}
+                    className="flex w-full items-center justify-between p-2 rounded-xl hover:bg-blue-50/60 border border-transparent hover:border-blue-200/60 transition-all text-left group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <img
+                        src={PRECONFIGURED_USERS.staff.avatar}
+                        alt="Ayesha Khan"
+                        className="h-7 w-7 rounded-full object-cover ring-1 ring-slate-200"
+                      />
+                      <div>
+                        <p className="text-xs font-bold text-slate-900 group-hover:text-blue-700">
+                          Ayesha Khan
+                        </p>
+                        <p className="text-[10px] text-slate-400">Staff Stylist (Restricted View)</p>
+                      </div>
+                    </div>
+                    <ArrowRightLeft className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSwitchAccount?.('admin');
+                      setUserDropdownOpen(false);
+                    }}
+                    className="flex w-full items-center justify-between p-2 rounded-xl hover:bg-emerald-50/60 border border-transparent hover:border-emerald-200/60 transition-all text-left group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <img
+                        src={PRECONFIGURED_USERS.admin.avatar}
+                        alt="Admin User"
+                        className="h-7 w-7 rounded-full object-cover ring-1 ring-slate-200"
+                      />
+                      <div>
+                        <p className="text-xs font-bold text-slate-900 group-hover:text-emerald-700">
+                          Admin User
+                        </p>
+                        <p className="text-[10px] text-slate-400">Administrator (Full Access)</p>
+                      </div>
+                    </div>
+                    <ArrowRightLeft className="h-3.5 w-3.5 text-slate-400 group-hover:text-emerald-600" />
+                  </button>
+                )}
+              </div>
+
+              <div className="border-t border-slate-100 my-1.5" />
 
               <button
+                type="button"
                 onClick={() => setUserDropdownOpen(false)}
-                className="mt-1 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
-              >
-                <UserCheck className="h-3.5 w-3.5 text-slate-400" />
-                Salon Profile & Branch
-              </button>
-              <button
-                onClick={() => setUserDropdownOpen(false)}
-                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 <SlidersHorizontal className="h-3.5 w-3.5 text-slate-400" />
-                Preferences
+                <span>Account Preferences</span>
               </button>
-              <div className="my-1 border-t border-slate-100" />
+
+              <div className="border-t border-slate-100 my-1.5" />
+
+              {/* Sign Out Button */}
               <button
-                onClick={() => setUserDropdownOpen(false)}
-                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50"
+                type="button"
+                onClick={() => {
+                  setUserDropdownOpen(false);
+                  onSignOut?.();
+                }}
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
               >
                 <LogOut className="h-3.5 w-3.5" />
-                Sign Out
+                <span>Sign Out</span>
               </button>
             </div>
           )}
 
+          {/* User Profile Chip (Clickable trigger) */}
           <div
             onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-            className="flex items-center justify-between rounded-2xl border border-slate-200/90 bg-white p-2.5 hover:bg-slate-50 transition-all cursor-pointer group shadow-2xs"
+            className={`flex items-center justify-between rounded-2xl border p-2.5 transition-all cursor-pointer group shadow-2xs ${
+              userDropdownOpen
+                ? 'border-slate-300 bg-slate-50 ring-2 ring-slate-900/5'
+                : 'border-slate-200/90 bg-white hover:bg-slate-50'
+            }`}
           >
-            <div className="flex items-center gap-2.5">
-              <div className="relative">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative shrink-0">
                 <img
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
-                  alt="Admin User"
+                  src={activeUser.avatar}
+                  alt={activeUser.name}
                   className="h-9 w-9 rounded-full object-cover ring-1 ring-slate-200"
                 />
                 <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
               </div>
-              <div className="flex flex-col text-left">
-                <span className="text-xs font-bold text-slate-900 group-hover:text-blue-600">
-                  Admin User
+              <div className="flex flex-col text-left truncate">
+                <span className="text-xs font-bold text-slate-900 group-hover:text-blue-600 truncate">
+                  {activeUser.name}
                 </span>
-                <span className="text-[11px] font-normal text-slate-400">
-                  {roleMode === 'admin' ? 'admin@regularsalon.pk' : 'Stylist Account'}
+                <span className="text-[11px] font-normal text-slate-400 truncate">
+                  {activeUser.email}
                 </span>
               </div>
             </div>
             <ChevronDown
-              className={`h-4 w-4 text-slate-400 transition-transform ${
+              className={`h-4 w-4 text-slate-400 transition-transform shrink-0 ${
                 userDropdownOpen ? 'rotate-180 text-slate-700' : ''
               }`}
             />

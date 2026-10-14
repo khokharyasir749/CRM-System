@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Search,
   Bell,
@@ -18,8 +18,14 @@ import {
   Share2,
   RefreshCw,
   Upload,
+  User,
+  Scissors,
+  Receipt,
+  Calendar,
+  ArrowUpRight,
+  X,
 } from 'lucide-react';
-import { RoleMode } from '@/types/crm';
+import { Appointment, Customer, Invoice, RoleMode } from '@/types/crm';
 
 interface HeaderProps {
   title?: string;
@@ -31,6 +37,12 @@ interface HeaderProps {
   onSearchChange: (query: string) => void;
   roleMode?: RoleMode;
   onToggleRoleMode?: (newMode: RoleMode) => void;
+  customers?: Customer[];
+  appointments?: Appointment[];
+  invoices?: Invoice[];
+  onSelectCustomer?: (customer: Customer) => void;
+  onSelectAppointment?: (appointment: Appointment) => void;
+  onSelectInvoice?: (invoice: Invoice) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -43,9 +55,16 @@ export const Header: React.FC<HeaderProps> = ({
   onSearchChange,
   roleMode = 'admin',
   onToggleRoleMode,
+  customers = [],
+  appointments = [],
+  invoices = [],
+  onSelectCustomer,
+  onSelectAppointment,
+  onSelectInvoice,
 }) => {
   const [exportOpen, setExportOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const notifications = [
     {
@@ -73,6 +92,49 @@ export const Header: React.FC<HeaderProps> = ({
       color: "text-blue-500 bg-blue-50",
     },
   ];
+
+  // Dynamic Search Results across Customers, Bookings, and Invoices
+  const searchResults = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return null;
+
+    const matchedCustomers = (customers || [])
+      .filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.phone.includes(q) ||
+          c.email.toLowerCase().includes(q)
+      )
+      .slice(0, 3);
+
+    const matchedAppointments = (appointments || [])
+      .filter(
+        (a) =>
+          a.bookingCode.toLowerCase().includes(q) ||
+          a.customer.name.toLowerCase().includes(q) ||
+          a.service.toLowerCase().includes(q)
+      )
+      .slice(0, 3);
+
+    const matchedInvoices = (invoices || [])
+      .filter(
+        (i) =>
+          i.invoiceCode.toLowerCase().includes(q) ||
+          i.customerName.toLowerCase().includes(q) ||
+          i.serviceName.toLowerCase().includes(q)
+      )
+      .slice(0, 3);
+
+    const totalCount =
+      matchedCustomers.length + matchedAppointments.length + matchedInvoices.length;
+
+    return {
+      customers: matchedCustomers,
+      appointments: matchedAppointments,
+      invoices: matchedInvoices,
+      totalCount,
+    };
+  }, [searchQuery, customers, appointments, invoices]);
 
   return (
     <header className="sticky top-0 z-30 flex flex-col gap-3 border-b border-slate-200/90 bg-white/95 px-6 py-3.5 backdrop-blur-md transition-all">
@@ -138,16 +200,185 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* Search Something Input */}
-          <div className="relative w-48 sm:w-64">
+          {/* Interactive Global Search Input & Dropdown */}
+          <div className="relative w-48 sm:w-72">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
+              onChange={(e) => {
+                onSearchChange(e.target.value);
+                setIsSearchFocused(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setIsSearchFocused(false);
+              }}
               placeholder="Search something"
-              className="w-full rounded-full border border-slate-200 bg-slate-50/70 py-1.5 pl-10 pr-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:outline-hidden"
+              className="w-full rounded-full border border-slate-200 bg-slate-50/70 py-1.5 pl-10 pr-8 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:outline-hidden transition-all shadow-2xs"
             />
+
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  onSearchChange('');
+                  setIsSearchFocused(false);
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                title="Clear search"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+
+            {/* Quick Command & Search Dropdown Results */}
+            {isSearchFocused && searchResults && (
+              <div className="absolute right-0 sm:left-0 sm:right-auto mt-2 w-80 sm:w-96 rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2 z-50">
+                <div className="flex items-center justify-between px-2 py-1.5 border-b border-slate-100 mb-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                    <Search className="h-3.5 w-3.5 text-slate-500" />
+                    <span>Quick Search Results</span>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                    {searchResults.totalCount} Found
+                  </span>
+                </div>
+
+                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                  {/* Category 1: Customers */}
+                  {searchResults.customers.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">
+                        Clients & Directory
+                      </span>
+                      {searchResults.customers.map((c) => (
+                        <div
+                          key={c.id}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            onSelectCustomer?.(c);
+                            setIsSearchFocused(false);
+                            onSearchChange('');
+                          }}
+                          className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <img
+                              src={c.avatar}
+                              alt={c.name}
+                              className="h-7 w-7 rounded-full object-cover ring-1 ring-slate-200"
+                            />
+                            <div>
+                              <p className="text-xs font-bold text-slate-900 group-hover:text-blue-600">
+                                {c.name}
+                              </p>
+                              <p className="text-[10px] text-slate-400">{c.phone}</p>
+                            </div>
+                          </div>
+                          <span className="rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-[9px] font-semibold">
+                            {c.category}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Category 2: Appointments */}
+                  {searchResults.appointments.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">
+                        Appointments & Bookings
+                      </span>
+                      {searchResults.appointments.map((a) => (
+                        <div
+                          key={a.id}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            onSelectAppointment?.(a);
+                            setIsSearchFocused(false);
+                            onSearchChange('');
+                          }}
+                          className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+                              <Scissors className="h-3.5 w-3.5" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-slate-900 group-hover:text-blue-600">
+                                {a.bookingCode} • {a.customer.name}
+                              </p>
+                              <p className="text-[10px] text-slate-400 truncate max-w-[180px]">
+                                {a.service} ({a.timeSlot})
+                              </p>
+                            </div>
+                          </div>
+                          <span className="rounded-full bg-slate-100 text-slate-700 px-2 py-0.5 text-[9px] font-semibold">
+                            {a.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Category 3: Invoices */}
+                  {searchResults.invoices.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">
+                        Invoices & Receipts
+                      </span>
+                      {searchResults.invoices.map((inv) => (
+                        <div
+                          key={inv.id}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            onSelectInvoice?.(inv);
+                            setIsSearchFocused(false);
+                            onSearchChange('');
+                          }}
+                          className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                              <Receipt className="h-3.5 w-3.5" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-slate-900 group-hover:text-blue-600">
+                                {inv.invoiceCode} • {inv.customerName}
+                              </p>
+                              <p className="text-[10px] text-slate-400">
+                                PKR {inv.totalAmount.toLocaleString()} ({inv.paymentMethod})
+                              </p>
+                            </div>
+                          </div>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[9px] font-semibold ${
+                              inv.paymentStatus === 'Paid'
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : 'bg-rose-50 text-rose-700'
+                            }`}
+                          >
+                            {inv.paymentStatus}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {searchResults.totalCount === 0 && (
+                    <div className="py-6 text-center text-xs text-slate-400">
+                      No records match "{searchQuery}"
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 px-2">
+                  <span>Press Esc to close</span>
+                  <span>Click record to jump</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Share Button */}

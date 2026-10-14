@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  X,
 } from 'lucide-react';
 import { Customer, Invoice, PaymentMethod, PaymentStatus } from '@/types/crm';
 
@@ -55,30 +56,56 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
     };
   }, [invoices]);
 
-  // Filter invoices
+  // Filter invoices dynamically based on both timeframe, payment status, and search query
   const filteredInvoices = useMemo(() => {
     return invoices.filter((inv) => {
-      // Status filter
-      const matchesStatus =
-        statusFilter === 'All'
-          ? true
-          : statusFilter === 'Paid in Full'
-          ? inv.paymentStatus === 'Paid'
-          : statusFilter === 'Partial Payment'
-          ? inv.paymentStatus === 'Partial'
-          : inv.paymentStatus === 'Unpaid' || inv.dueBalance > 0;
+      // 1. Timeframe filter
+      let matchesTimeframe = true;
+      if (dateFilter === 'Today') {
+        matchesTimeframe =
+          inv.recordedDate.includes('Today') ||
+          inv.recordedDate.includes('Oct 14') ||
+          inv.recordedDate.includes('Just Now');
+      } else if (dateFilter === 'This Week') {
+        matchesTimeframe =
+          inv.recordedDate.includes('Today') ||
+          inv.recordedDate.includes('Oct 14') ||
+          inv.recordedDate.includes('Oct 13') ||
+          inv.recordedDate.includes('Oct 12') ||
+          inv.recordedDate.includes('Oct 11') ||
+          inv.recordedDate.includes('Oct 10') ||
+          inv.recordedDate.includes('Just Now');
+      } else if (dateFilter === 'This Month') {
+        matchesTimeframe =
+          inv.recordedDate.includes('Oct') ||
+          inv.recordedDate.includes('Today') ||
+          inv.recordedDate.includes('Just Now') ||
+          inv.recordedDate.includes('2026');
+      } // 'Custom' matches all
 
-      // Search filter
-      const q = searchQuery.toLowerCase();
+      // 2. Status filter
+      let matchesStatus = true;
+      if (statusFilter === 'Paid in Full') {
+        matchesStatus = inv.paymentStatus === 'Paid' && inv.dueBalance === 0;
+      } else if (statusFilter === 'Partial Payment') {
+        matchesStatus = inv.paymentStatus === 'Partial' || (inv.paidAmount > 0 && inv.dueBalance > 0);
+      } else if (statusFilter === 'Unpaid / Due') {
+        matchesStatus = inv.paymentStatus === 'Unpaid' || inv.dueBalance > 0;
+      }
+
+      // 3. Search filter
+      const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
+        !q ||
         inv.invoiceCode.toLowerCase().includes(q) ||
         inv.customerName.toLowerCase().includes(q) ||
         inv.customerPhone.includes(q) ||
-        inv.serviceName.toLowerCase().includes(q);
+        inv.serviceName.toLowerCase().includes(q) ||
+        inv.paymentMethod.toLowerCase().includes(q);
 
-      return matchesStatus && matchesSearch;
+      return matchesTimeframe && matchesStatus && matchesSearch;
     });
-  }, [invoices, statusFilter, searchQuery]);
+  }, [invoices, dateFilter, statusFilter, searchQuery]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -146,16 +173,17 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
       <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs lg:flex-row lg:items-center lg:justify-between">
         {/* Date Filter & Status Pills */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Date range filter */}
-          <div className="flex items-center rounded-full bg-slate-100 p-1 border border-slate-200/60 text-xs">
+          {/* Timeframe Pills */}
+          <div className="flex flex-wrap items-center gap-1.5">
             {(['Today', 'This Week', 'This Month', 'Custom'] as const).map((range) => (
               <button
                 key={range}
+                type="button"
                 onClick={() => setDateFilter(range)}
-                className={`rounded-full px-3 py-1 font-medium transition-all ${
+                className={`rounded-full px-3.5 py-1.5 text-xs transition-all ${
                   dateFilter === range
-                    ? 'bg-slate-900 text-white shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-slate-900 text-white font-bold shadow-xs'
+                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 font-medium'
                 }`}
               >
                 {range}
@@ -163,16 +191,19 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
             ))}
           </div>
 
+          <div className="hidden sm:block h-4 w-px bg-slate-200" />
+
           {/* Status Pills */}
           <div className="flex flex-wrap items-center gap-1.5">
             {(['All', 'Paid in Full', 'Partial Payment', 'Unpaid / Due'] as const).map((status) => (
               <button
                 key={status}
+                type="button"
                 onClick={() => setStatusFilter(status)}
-                className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                className={`rounded-full px-3.5 py-1.5 text-xs transition-all ${
                   statusFilter === status
-                    ? 'bg-slate-800 text-white'
-                    : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                    ? 'bg-slate-900 text-white font-bold shadow-xs'
+                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 font-medium'
                 }`}
               >
                 {status}
@@ -184,14 +215,24 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
         {/* Right Search & Record Payment Button */}
         <div className="flex items-center gap-3">
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-600" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search invoice, client, phone..."
-              className="w-full rounded-full border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 focus:bg-white focus:outline-hidden"
+              className="w-full rounded-full border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-8 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                title="Clear search"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
 
           <button
@@ -203,6 +244,38 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Active Filter Summary Bar */}
+      {(dateFilter !== 'Custom' || statusFilter !== 'All' || searchQuery) && (
+        <div className="flex items-center justify-between text-xs text-slate-500 bg-slate-50/80 px-4 py-2 rounded-xl border border-slate-200/60">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold text-slate-700">Filter Applied:</span>
+            <span>Showing {filteredInvoices.length} of {invoices.length} invoices</span>
+            <span className="text-slate-300">•</span>
+            <span className="rounded bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-800">
+              {dateFilter}
+            </span>
+            <span className="rounded bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-800">
+              {statusFilter}
+            </span>
+            {searchQuery && (
+              <span className="rounded bg-blue-50 text-blue-700 px-2 py-0.5 text-[10px] font-bold">
+                Query: "{searchQuery}"
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => {
+              setDateFilter('Custom');
+              setStatusFilter('All');
+              setSearchQuery('');
+            }}
+            className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline shrink-0"
+          >
+            Reset All
+          </button>
+        </div>
+      )}
 
       {/* Payments Ledger Table */}
       <div className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">

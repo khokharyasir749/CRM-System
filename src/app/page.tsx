@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
+import { AuthUser, PRECONFIGURED_USERS, UserRole } from '@/types/auth';
 import { KpiCards } from '@/components/dashboard/KpiCards';
 import { AnalyticsPerformance } from '@/components/dashboard/AnalyticsPerformance';
 import { AppointmentsTable } from '@/components/dashboard/AppointmentsTable';
@@ -81,8 +82,41 @@ export default function DashboardPage() {
     return 'dashboard';
   }, [activeView]);
 
-  // Role Permissions Simulation Mode ('admin' vs 'staff')
+  // User Authentication & Account State
+  const [currentUser, setCurrentUser] = useState<AuthUser>(PRECONFIGURED_USERS.admin);
   const [roleMode, setRoleMode] = useState<RoleMode>('admin');
+
+  // Load saved active user session on client mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('crm_active_user') as UserRole | null;
+      if (saved && PRECONFIGURED_USERS[saved]) {
+        setCurrentUser(PRECONFIGURED_USERS[saved]);
+        setRoleMode(saved);
+      }
+    }
+  }, []);
+
+  const handleSwitchAccount = (newRole: UserRole) => {
+    const user = PRECONFIGURED_USERS[newRole];
+    setCurrentUser(user);
+    setRoleMode(newRole);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('crm_active_user', newRole);
+    }
+    showToast(
+      'info',
+      `Switched to ${user.name}`,
+      `Logged in as ${user.roleTitle}. Permissions and visibility updated.`
+    );
+  };
+
+  const handleSignOut = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('crm_active_user');
+      window.location.href = '/login';
+    }
+  };
 
   // Primary Cross-Module State
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
@@ -350,14 +384,12 @@ export default function DashboardPage() {
 
   // Quick Book trigger from Customer profile
   const handleQuickBookCustomer = (customer: Customer) => {
-    setPreselectedCustomerForBooking(customer);
-    setIsNewAppointmentModalOpen(true);
+    setActiveView({ type: 'new-appointment', preselectedCustomerId: customer.id });
   };
 
   // Record Payment trigger from Customer profile
   const handleRecordPaymentCustomer = (customer: Customer) => {
-    setPreselectedCustomerForPayment(customer);
-    setIsRecordPaymentModalOpen(true);
+    setActiveView({ type: 'record-payment', customerId: customer.id });
   };
 
   // Complaints Handlers
@@ -444,7 +476,10 @@ export default function DashboardPage() {
         isMobileOpen={isMobileOpen}
         onCloseMobile={() => setIsMobileOpen(false)}
         roleMode={roleMode}
-        onToggleRoleMode={setRoleMode}
+        onToggleRoleMode={handleSwitchAccount}
+        currentUser={currentUser}
+        onSwitchAccount={handleSwitchAccount}
+        onSignOut={handleSignOut}
       />
 
       {/* Main Content Area */}
@@ -493,7 +528,13 @@ export default function DashboardPage() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           roleMode={roleMode}
-          onToggleRoleMode={setRoleMode}
+          onToggleRoleMode={handleSwitchAccount}
+          customers={customers}
+          appointments={appointments}
+          invoices={invoices}
+          onSelectCustomer={(c) => setActiveView({ type: 'customer-detail', customerId: c.id })}
+          onSelectAppointment={(a) => setActiveView({ type: 'appointment-detail', appointmentId: a.id })}
+          onSelectInvoice={(inv) => setSelectedInvoiceForReceipt(inv)}
         />
 
         {/* Dynamic Page Views */}
