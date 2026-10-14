@@ -145,10 +145,14 @@ export default function DashboardPage() {
 
   const showToast = (type: 'success' | 'warning' | 'info', title: string, message?: string) => {
     const id = `toast-${Date.now()}-${Math.random()}`;
-    setToasts((prev) => [...prev, { id, type, title, message }]);
+    setToasts((prev) => {
+      // Strictly limit to at most 1 previous toast so at most 2 toasts are visible at any time
+      const trimmed = prev.slice(-1);
+      return [...trimmed, { id, type, title, message }];
+    });
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4500);
+    }, 3000); // Strict 3-second auto-dismiss
   };
 
   const handleDismissToast = (id: string) => {
@@ -528,7 +532,6 @@ export default function DashboardPage() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           roleMode={roleMode}
-          onToggleRoleMode={handleSwitchAccount}
           customers={customers}
           appointments={appointments}
           invoices={invoices}

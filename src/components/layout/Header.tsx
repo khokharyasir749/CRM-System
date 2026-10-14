@@ -404,23 +404,17 @@ export const Header: React.FC<HeaderProps> = ({
             <span>Customize Widget</span>
           </button>
 
-          {/* Role Simulator Tag */}
-          {onToggleRoleMode && (
-            <button
-              onClick={() => onToggleRoleMode(roleMode === 'admin' ? 'staff' : 'admin')}
-              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold border transition-colors ${
-                roleMode === 'admin'
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-                  : 'border-blue-200 bg-blue-50 text-blue-800'
-              }`}
-            >
-              {roleMode === 'admin' ? (
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-              ) : (
-                <ShieldAlert className="h-3.5 w-3.5 text-blue-600" />
-              )}
-              <span>{roleMode === 'admin' ? 'Admin Role' : 'Staff Mode'}</span>
-            </button>
+          {/* Static Non-Clickable Role Status Badge */}
+          {roleMode === 'admin' ? (
+            <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full text-xs font-semibold select-none cursor-default">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+              <span>Admin Role</span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-1.5 bg-sky-50 text-sky-700 border border-sky-200 px-3 py-1 rounded-full text-xs font-semibold select-none cursor-default">
+              <ShieldAlert className="h-3.5 w-3.5 text-sky-600" />
+              <span>Staff Role</span>
+            </div>
           )}
         </div>
 
