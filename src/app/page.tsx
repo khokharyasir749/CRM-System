@@ -6,14 +6,10 @@ import { Header } from '@/components/layout/Header';
 import { KpiCards } from '@/components/dashboard/KpiCards';
 import { AnalyticsPerformance } from '@/components/dashboard/AnalyticsPerformance';
 import { AppointmentsTable } from '@/components/dashboard/AppointmentsTable';
-import { NewAppointmentModal } from '@/components/dashboard/NewAppointmentModal';
 import { CustomizeWidgetsModal } from '@/components/dashboard/CustomizeWidgetsModal';
 import { CustomerListView } from '@/components/customers/CustomerListView';
-import { CustomerProfileDrawer } from '@/components/customers/CustomerProfileDrawer';
-import { AddCustomerModal } from '@/components/customers/AddCustomerModal';
 import { AppointmentsView } from '@/components/appointments/AppointmentsView';
 import { PaymentsView } from '@/components/payments/PaymentsView';
-import { RecordPaymentModal } from '@/components/payments/RecordPaymentModal';
 import { ReceiptModal } from '@/components/payments/ReceiptModal';
 import { ComplaintsView } from '@/components/complaints/ComplaintsView';
 import { FollowUpsView } from '@/components/followups/FollowUpsView';
@@ -100,19 +96,8 @@ export default function DashboardPage() {
   const [salonServices, setSalonServices] = useState<SalonServiceItem[]>(initialServicesCatalog);
   const [salonSettings, setSalonSettings] = useState<SalonProfileSettings>(initialSalonSettings);
 
-  // Modals & Drawers State
-  const [selectedCustomerForDrawer, setSelectedCustomerForDrawer] = useState<Customer | null>(null);
-  const [selectedAppointmentForDetail, setSelectedAppointmentForDetail] = useState<Appointment | null>(null);
+  // Modals & Panels State
   const [selectedInvoiceForReceipt, setSelectedInvoiceForReceipt] = useState<Invoice | null>(null);
-
-  const [isNewAppointmentModalOpen, setIsNewAppointmentModalOpen] = useState(false);
-  const [preselectedCustomerForBooking, setPreselectedCustomerForBooking] = useState<Customer | null>(null);
-
-  const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
-
-  const [isRecordPaymentModalOpen, setIsRecordPaymentModalOpen] = useState(false);
-  const [preselectedCustomerForPayment, setPreselectedCustomerForPayment] = useState<Customer | null>(null);
-
   const [isCustomizeWidgetsOpen, setIsCustomizeWidgetsOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
