@@ -85,11 +85,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <Sparkles className="h-5 w-5 text-amber-300" />
               </div>
               <div className="flex flex-col">
-                <span className="text-xl font-extrabold tracking-tight text-slate-900">
+                <span className="text-lg font-bold tracking-tight text-slate-900">
                   Regular CRM
                 </span>
-                <span className="text-[10px] font-semibold tracking-wider uppercase text-slate-400">
-                  Salon Suite
+                <span className="text-[10px] font-semibold text-slate-400 tracking-wider uppercase">
+                  SALON SUITE
                 </span>
               </div>
             </div>

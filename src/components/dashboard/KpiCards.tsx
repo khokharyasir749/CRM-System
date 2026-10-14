@@ -79,12 +79,19 @@ export const KpiCards: React.FC<KpiCardsProps> = ({
 
             {/* Value display + Trend pill side-by-side (exact Cemdash style) */}
             <div className="mt-3 flex items-center justify-between">
-              <span className="text-2xl sm:text-[26px] font-extrabold tracking-tight text-slate-900">
-                {card.value}
+              <span className="text-2xl font-bold tracking-tight text-slate-900 leading-snug">
+                {card.value.startsWith('PKR ') ? (
+                  <>
+                    <span className="text-xs font-semibold text-slate-500 mr-1.5">PKR</span>
+                    <span>{card.value.replace('PKR ', '')}</span>
+                  </>
+                ) : (
+                  <span>{card.value}</span>
+                )}
               </span>
 
               <span
-                className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-bold ${card.badgeColor}`}
+                className={`text-[11px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1 border ${card.badgeColor}`}
               >
                 {card.isPositive ? (
                   <ArrowUpRight className="h-3 w-3 stroke-[2.5]" />

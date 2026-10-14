@@ -41,7 +41,7 @@ export const AnalyticsPerformance: React.FC = () => {
         <div>
           {/* Top Row: Title and MoreHorizontal menu */}
           <div className="flex items-center justify-between pb-3">
-            <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+            <h3 className="text-[15px] font-bold text-slate-900">
               Revenue and Expenses
             </h3>
             <button className="text-slate-400 hover:text-slate-700">
@@ -59,7 +59,7 @@ export const AnalyticsPerformance: React.FC = () => {
                   <span className="text-xs font-semibold text-slate-600">Revenue</span>
                 </div>
                 <div className="mt-1 flex items-baseline gap-2">
-                  <span className="text-xl font-extrabold text-slate-900 tracking-tight">
+                  <span className="text-xl font-bold tracking-tight text-slate-900">
                     PKR 485,000
                   </span>
                   <span className="inline-flex items-center gap-0.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2 py-0.2 text-[11px] font-bold text-emerald-600">
@@ -79,7 +79,7 @@ export const AnalyticsPerformance: React.FC = () => {
                   <span className="text-xs font-semibold text-slate-600">Expenses</span>
                 </div>
                 <div className="mt-1 flex items-baseline gap-2">
-                  <span className="text-xl font-extrabold text-slate-900 tracking-tight">
+                  <span className="text-xl font-bold tracking-tight text-slate-900">
                     PKR 168,000
                   </span>
                   <span className="inline-flex items-center gap-0.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2 py-0.2 text-[11px] font-bold text-emerald-600">
@@ -199,7 +199,7 @@ export const AnalyticsPerformance: React.FC = () => {
         <div>
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+            <h3 className="text-[15px] font-bold text-slate-900">
               Performance
             </h3>
             <button className="text-slate-400 hover:text-slate-700">
@@ -220,7 +220,7 @@ export const AnalyticsPerformance: React.FC = () => {
                 <span className="font-medium text-slate-400">
                   Sales target achieved!
                 </span>
-                <span className="font-extrabold text-slate-900">82%</span>
+                <span className="text-sm font-bold text-slate-900">82%</span>
               </div>
               {/* Green Progress Bar */}
               <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
@@ -243,7 +243,7 @@ export const AnalyticsPerformance: React.FC = () => {
                 <span className="font-medium text-slate-400">
                   KPI target achieved!
                 </span>
-                <span className="font-extrabold text-slate-900">74%</span>
+                <span className="text-sm font-bold text-slate-900">74%</span>
               </div>
               {/* Pink / Fuchsia Progress Bar */}
               <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
@@ -266,7 +266,7 @@ export const AnalyticsPerformance: React.FC = () => {
                 <span className="font-medium text-slate-400">
                   Customers are very satisfied!
                 </span>
-                <span className="font-extrabold text-slate-900">96%</span>
+                <span className="text-sm font-bold text-slate-900">96%</span>
               </div>
               {/* Electric Blue Progress Bar */}
               <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">

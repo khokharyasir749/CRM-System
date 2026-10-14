@@ -82,7 +82,7 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
     <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
       {/* Title Header with ... menu (matching Cemdash) */}
       <div className="flex items-center justify-between px-6 pt-5 pb-3">
-        <h3 className="text-base font-bold text-slate-900 tracking-tight">
+        <h3 className="text-[15px] font-bold text-slate-900">
           Sales Deals & Recent Visits
         </h3>
         <button className="text-slate-400 hover:text-slate-700">
@@ -111,7 +111,7 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
             <div className="relative">
               <button
                 onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-800 hover:bg-slate-50 transition-colors shadow-2xs"
+                className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-slate-800 hover:bg-slate-50 transition-colors shadow-2xs"
               >
                 <Filter className="h-3.5 w-3.5 text-slate-600" />
                 <span>Filter</span>
@@ -147,7 +147,7 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
             {/* Exports Solid Black Pill */}
             <button
               onClick={onExport}
-              className="flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 transition-colors shadow-xs"
+              className="flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-xs"
             >
               <Download className="h-3.5 w-3.5" />
               <span>Exports</span>
@@ -267,8 +267,8 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
                     {app.service}
                   </td>
 
-                  {/* Deal Value (Bold black) */}
-                  <td className="py-3.5 px-3 font-extrabold text-slate-900 text-xs">
+                  {/* Deal Value */}
+                  <td className="py-3.5 px-3 text-sm font-semibold text-slate-900 tabular-nums">
                     PKR {app.amount.toLocaleString()}
                   </td>
 
