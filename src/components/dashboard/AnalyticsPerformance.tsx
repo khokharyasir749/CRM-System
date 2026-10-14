@@ -39,91 +39,92 @@ export const AnalyticsPerformance: React.FC = () => {
       {/* Left Card: Revenue and Expenses (8 cols on lg) */}
       <div className="lg:col-span-8 flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
         <div>
-          {/* Top Row: Title and MoreHorizontal menu */}
+          {/* Top Row: Title on Left, Dropdown Pill + More Menu Pinned to Top Right */}
           <div className="flex items-center justify-between pb-3">
             <h3 className="text-[15px] font-bold text-slate-900">
               Revenue and Expenses
             </h3>
-            <button className="text-slate-400 hover:text-slate-700">
-              <MoreHorizontal className="h-4 w-4" />
-            </button>
+
+            <div className="flex items-center gap-2">
+              {/* Timeframe dropdown pill */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 transition-colors shadow-2xs"
+                >
+                  <Calendar className="h-3.5 w-3.5 text-slate-500" />
+                  <span>{timeRange}</span>
+                  <ChevronDown className="h-3 w-3 text-slate-400" />
+                </button>
+
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-36 rounded-2xl border border-slate-200 bg-white p-1 shadow-xl ring-1 ring-black/5 z-20">
+                    {['This Month', 'Last 6 Months', 'This Year'].map((range) => (
+                      <button
+                        key={range}
+                        onClick={() => {
+                          setTimeRange(range);
+                          setIsDropdownOpen(false);
+                        }}
+                        className={`flex w-full items-center rounded-xl px-3 py-1.5 text-xs font-semibold ${
+                          timeRange === range
+                            ? 'bg-slate-900 text-white'
+                            : 'text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        {range}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <button className="text-slate-400 hover:text-slate-700 p-1">
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
-          {/* Metric summary strip + time dropdown (matching Cemdash) */}
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-5">
-            <div className="flex flex-wrap items-center gap-8">
-              {/* Revenue */}
-              <div className="flex flex-col">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-[#D946EF]" />
-                  <span className="text-xs font-semibold text-slate-600">Revenue</span>
-                </div>
-                <div className="mt-1 flex items-baseline gap-2">
-                  <span className="text-xl font-bold tracking-tight text-slate-900">
-                    PKR 485,000
-                  </span>
-                  <span className="inline-flex items-center gap-0.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2 py-0.2 text-[11px] font-bold text-emerald-600">
-                    <ArrowUpRight className="h-3 w-3" />
-                    3,4%
-                  </span>
-                </div>
-                <span className="text-[11px] font-medium text-slate-400 mt-0.5">
-                  Than last period
+          {/* Metric summary strip: Revenue and Expenses side-by-side */}
+          <div className="mt-2 flex flex-wrap items-center gap-8 sm:gap-12 border-b border-slate-100 pb-5">
+            {/* Revenue */}
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-[#D946EF]" />
+                <span className="text-xs font-semibold text-slate-600">Revenue</span>
+              </div>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-xl font-bold tracking-tight text-slate-900">
+                  PKR 485,000
+                </span>
+                <span className="inline-flex items-center gap-0.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-600">
+                  <ArrowUpRight className="h-3 w-3 stroke-[2.5]" />
+                  3.4%
                 </span>
               </div>
-
-              {/* Expenses */}
-              <div className="flex flex-col">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-[#0284C7]" />
-                  <span className="text-xs font-semibold text-slate-600">Expenses</span>
-                </div>
-                <div className="mt-1 flex items-baseline gap-2">
-                  <span className="text-xl font-bold tracking-tight text-slate-900">
-                    PKR 168,000
-                  </span>
-                  <span className="inline-flex items-center gap-0.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2 py-0.2 text-[11px] font-bold text-emerald-600">
-                    <ArrowUpRight className="h-3 w-3" />
-                    1,2%
-                  </span>
-                </div>
-                <span className="text-[11px] font-medium text-slate-400 mt-0.5">
-                  Than last period
-                </span>
-              </div>
+              <span className="text-[11px] font-medium text-slate-400 mt-0.5">
+                Than last period
+              </span>
             </div>
 
-            {/* Timeframe dropdown pill */}
-            <div className="relative">
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-800 hover:bg-slate-50 transition-colors shadow-2xs"
-              >
-                <Calendar className="h-3.5 w-3.5 text-slate-500" />
-                <span>{timeRange}</span>
-                <ChevronDown className="h-3 w-3 text-slate-400" />
-              </button>
-
-              {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-36 rounded-2xl border border-slate-200 bg-white p-1 shadow-xl ring-1 ring-black/5 z-20">
-                  {['This Month', 'Last 6 Months', 'This Year'].map((range) => (
-                    <button
-                      key={range}
-                      onClick={() => {
-                        setTimeRange(range);
-                        setIsDropdownOpen(false);
-                      }}
-                      className={`flex w-full items-center rounded-xl px-3 py-1.5 text-xs font-semibold ${
-                        timeRange === range
-                          ? 'bg-slate-900 text-white'
-                          : 'text-slate-700 hover:bg-slate-100'
-                      }`}
-                    >
-                      {range}
-                    </button>
-                  ))}
-                </div>
-              )}
+            {/* Expenses */}
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-[#0284C7]" />
+                <span className="text-xs font-semibold text-slate-600">Expenses</span>
+              </div>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-xl font-bold tracking-tight text-slate-900">
+                  PKR 168,000
+                </span>
+                <span className="inline-flex items-center gap-0.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-600">
+                  <ArrowUpRight className="h-3 w-3 stroke-[2.5]" />
+                  1.2%
+                </span>
+              </div>
+              <span className="text-[11px] font-medium text-slate-400 mt-0.5">
+                Than last period
+              </span>
             </div>
           </div>
 

@@ -112,11 +112,20 @@ export default function DashboardPage() {
 
   // Synchronized Dynamic KPI Stats
   const stats = useMemo(() => {
-    const totalRevenue = invoices.reduce((acc, curr) => acc + curr.paidAmount, 0) + 325000;
-    const outstandingBalances = customers.reduce(
+    const initialPaidTotal = initialInvoices.reduce((acc, curr) => acc + curr.paidAmount, 0);
+    const dynamicRevenue = invoices.reduce((acc, curr) => acc + curr.paidAmount, 0);
+    const totalRevenue = 416500 + (dynamicRevenue - initialPaidTotal);
+
+    const initialBalanceTotal = initialCustomers.reduce(
       (acc, curr) => acc + curr.outstandingBalance,
       0
     );
+    const dynamicBalance = customers.reduce(
+      (acc, curr) => acc + curr.outstandingBalance,
+      0
+    );
+    const outstandingBalances = 38500 + (dynamicBalance - initialBalanceTotal);
+
     const totalAppointments = appointments.length + 334;
     const activeCustomers = customers.length + 1272;
 

@@ -18,7 +18,7 @@ interface KpiCardsProps {
 
 export const KpiCards: React.FC<KpiCardsProps> = ({
   stats = {
-    totalRevenue: 485000,
+    totalRevenue: 416500,
     totalAppointments: 342,
     outstandingBalances: 38500,
     activeCustomers: 1280,
@@ -28,7 +28,7 @@ export const KpiCards: React.FC<KpiCardsProps> = ({
     {
       title: 'Total Revenue',
       value: `PKR ${stats.totalRevenue.toLocaleString()}`,
-      trend: '8,4%',
+      trend: '8.4%',
       isPositive: true,
       subtext: 'Than last week',
       badgeColor: 'bg-emerald-50 text-emerald-600 border-emerald-200/80',
@@ -36,7 +36,7 @@ export const KpiCards: React.FC<KpiCardsProps> = ({
     {
       title: 'Total Appointments',
       value: `${stats.totalAppointments.toLocaleString()}`,
-      trend: '5,2%',
+      trend: '5.2%',
       isPositive: true,
       subtext: 'Than last week',
       badgeColor: 'bg-emerald-50 text-emerald-600 border-emerald-200/80',
@@ -44,7 +44,7 @@ export const KpiCards: React.FC<KpiCardsProps> = ({
     {
       title: 'Outstanding Balances',
       value: `PKR ${stats.outstandingBalances.toLocaleString()}`,
-      trend: '2,9%',
+      trend: '2.9%',
       isPositive: false,
       subtext: 'Than last week',
       badgeColor: 'bg-rose-50 text-rose-600 border-rose-200/80',
@@ -52,7 +52,7 @@ export const KpiCards: React.FC<KpiCardsProps> = ({
     {
       title: 'Total Active Customers',
       value: `${stats.activeCustomers.toLocaleString()}`,
-      trend: '14,2%',
+      trend: '14.2%',
       isPositive: true,
       subtext: 'Than last week',
       badgeColor: 'bg-emerald-50 text-emerald-600 border-emerald-200/80',
@@ -77,21 +77,25 @@ export const KpiCards: React.FC<KpiCardsProps> = ({
               </button>
             </div>
 
-            {/* Value display + Trend pill side-by-side (exact Cemdash style) */}
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-2xl font-bold tracking-tight text-slate-900 leading-snug">
-                {card.value.startsWith('PKR ') ? (
-                  <>
-                    <span className="text-xs font-semibold text-slate-500 mr-1.5">PKR</span>
-                    <span>{card.value.replace('PKR ', '')}</span>
-                  </>
-                ) : (
-                  <span>{card.value}</span>
-                )}
-              </span>
+            {/* Value display + Trend pill side-by-side on baseline */}
+            <div className="mt-3 flex items-center justify-between gap-2">
+              {card.value.startsWith('PKR ') ? (
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-sm font-semibold text-slate-500">PKR</span>
+                  <span className="text-[26px] font-bold tracking-tight text-slate-900 leading-none">
+                    {card.value.replace('PKR ', '')}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-baseline">
+                  <span className="text-[26px] font-bold tracking-tight text-slate-900 leading-none">
+                    {card.value}
+                  </span>
+                </div>
+              )}
 
               <span
-                className={`text-[11px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1 border ${card.badgeColor}`}
+                className={`text-[11px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1 border shrink-0 ${card.badgeColor}`}
               >
                 {card.isPositive ? (
                   <ArrowUpRight className="h-3 w-3 stroke-[2.5]" />
