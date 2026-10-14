@@ -66,7 +66,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-  const notifications = [
+  const [notifications, setNotifications] = useState([
     {
       id: 1,
       title: "New Booking Confirmed",
@@ -74,6 +74,7 @@ export const Header: React.FC<HeaderProps> = ({
       time: "10 mins ago",
       icon: CheckCircle2,
       color: "text-emerald-500 bg-emerald-50",
+      read: false,
     },
     {
       id: 2,
@@ -82,6 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
       time: "45 mins ago",
       icon: AlertTriangle,
       color: "text-amber-500 bg-amber-50",
+      read: false,
     },
     {
       id: 3,
@@ -90,8 +92,26 @@ export const Header: React.FC<HeaderProps> = ({
       time: "1 hour ago",
       icon: Clock,
       color: "text-blue-500 bg-blue-50",
+      read: false,
     },
-  ];
+  ]);
+
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.read).length,
+    [notifications]
+  );
+
+  const handleToggleNotifications = () => {
+    setNotificationsOpen(!notificationsOpen);
+  };
+
+  const handleMarkAllRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const handleClearNotifications = () => {
+    setNotifications([]);
+  };
 
   // Dynamic Search Results across Customers, Bookings, and Invoices
   const searchResults = useMemo(() => {
@@ -161,42 +181,103 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Notification Icon */}
           <div className="relative">
             <button
-              onClick={() => setNotificationsOpen(!notificationsOpen)}
-              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors shadow-2xs"
+              onClick={handleToggleNotifications}
+              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
+              title="Notifications"
             >
               <Bell className="h-4 w-4 text-slate-700" />
-              <span className="absolute 1 top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
+              {/* Red dot indicator sirf tab nazar aye ga jab unread notifications hongi */}
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white animate-pulse" />
+              )}
             </button>
 
             {notificationsOpen && (
-              <div className="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2 z-50">
-                <div className="flex items-center justify-between px-2 py-1.5 border-b border-slate-100">
-                  <span className="text-xs font-bold text-slate-900">Notifications</span>
-                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
-                    3 New
-                  </span>
-                </div>
-                <div className="mt-2 flex flex-col gap-1 max-h-72 overflow-y-auto">
-                  {notifications.map((n) => {
-                    const Icon = n.icon;
-                    return (
-                      <div
-                        key={n.id}
-                        className="flex items-start gap-2.5 rounded-xl p-2 hover:bg-slate-50 transition-colors cursor-pointer"
-                      >
-                        <div className={`mt-0.5 rounded-lg p-1.5 ${n.color}`}>
-                          <Icon className="h-3.5 w-3.5" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs font-bold text-slate-900">{n.title}</p>
-                          <p className="text-[11px] text-slate-500 line-clamp-1">{n.desc}</p>
-                          <span className="text-[10px] text-slate-400">{n.time}</span>
-                        </div>
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setNotificationsOpen(false)}
+                />
+                <div className="absolute right-0 mt-2 w-80 sm:w-88 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xl ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2 z-50">
+                  <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-900">Notifications</span>
+                      {unreadCount > 0 ? (
+                        <span className="rounded-full bg-rose-50 border border-rose-200 px-2 py-0.5 text-[10px] font-bold text-rose-600">
+                          {unreadCount} New
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                          All read
+                        </span>
+                      )}
+                    </div>
+                    {notifications.length > 0 && (
+                      <div className="flex items-center gap-2.5">
+                        {unreadCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={handleMarkAllRead}
+                            className="text-[10px] font-semibold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+                          >
+                            Mark all read
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={handleClearNotifications}
+                          className="text-[10px] font-medium text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                        >
+                          Clear all
+                        </button>
                       </div>
-                    );
-                  })}
+                    )}
+                  </div>
+
+                  <div className="mt-2 flex flex-col gap-1 max-h-72 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="py-8 text-center text-xs text-slate-400">
+                        Koi notification nahi hai
+                      </div>
+                    ) : (
+                      notifications.map((n) => {
+                        const Icon = n.icon;
+                        return (
+                          <div
+                            key={n.id}
+                            onClick={() => {
+                              setNotifications((prev) =>
+                                prev.map((item) =>
+                                  item.id === n.id ? { ...item, read: true } : item
+                                )
+                              );
+                            }}
+                            className={`flex items-start gap-2.5 rounded-xl p-2.5 transition-colors cursor-pointer ${
+                              n.read
+                                ? 'opacity-65 hover:bg-slate-50'
+                                : 'bg-blue-50/40 hover:bg-blue-50/70 border border-blue-100/60'
+                            }`}
+                          >
+                            <div className={`mt-0.5 rounded-lg p-1.5 ${n.color}`}>
+                              <Icon className="h-3.5 w-3.5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-1">
+                                <p className="text-xs font-bold text-slate-900 truncate">{n.title}</p>
+                                {!n.read && (
+                                  <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" />
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-500 line-clamp-1">{n.desc}</p>
+                              <span className="text-[10px] text-slate-400">{n.time}</span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
 
