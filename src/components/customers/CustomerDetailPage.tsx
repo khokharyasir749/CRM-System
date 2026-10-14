@@ -34,6 +34,7 @@ interface CustomerDetailPageProps {
   followUps: FollowUpTask[];
   onBookAppointment: (customer: Customer) => void;
   onRecordPayment: (customer: Customer) => void;
+  onViewAppointment?: (appointment: Appointment) => void;
 }
 
 export const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({
@@ -45,6 +46,7 @@ export const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({
   followUps,
   onBookAppointment,
   onRecordPayment,
+  onViewAppointment,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'appointments' | 'services' | 'payments' | 'complaints' | 'followups'>('overview');
 
@@ -294,7 +296,11 @@ export const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {customerAppointments.map((app) => (
-                    <tr key={app.id} className="hover:bg-slate-50">
+                    <tr
+                      key={app.id}
+                      onClick={() => onViewAppointment?.(app)}
+                      className="hover:bg-slate-50 cursor-pointer transition-colors"
+                    >
                       <td className="py-3 px-4 font-bold text-slate-900">{app.bookingCode}</td>
                       <td className="py-3 px-4 font-semibold text-slate-800">{app.service}</td>
                       <td className="py-3 px-4 text-slate-600">{app.stylist.name}</td>
@@ -328,7 +334,8 @@ export const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({
             {customerAppointments.map((app) => (
               <div
                 key={app.id}
-                className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/50 p-4 text-xs"
+                onClick={() => onViewAppointment?.(app)}
+                className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/50 p-4 text-xs cursor-pointer hover:bg-slate-100/70 transition-colors"
               >
                 <div>
                   <h4 className="font-bold text-slate-900">{app.service}</h4>

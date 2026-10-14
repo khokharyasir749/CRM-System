@@ -17,6 +17,8 @@ import {
   FileText,
   DollarSign,
   Gift,
+  ArrowLeft,
+  ChevronRight,
 } from 'lucide-react';
 import {
   ComplaintCategory,
@@ -161,6 +163,184 @@ export const ComplaintsView: React.FC<ComplaintsViewProps> = ({
         return <span className="rounded-full bg-slate-100 text-slate-600 px-2 py-0.5 text-[10px] font-bold">Closed</span>;
     }
   };
+
+  if (resolvingTicket) {
+    const custObj = customers.find(
+      (c) => c.id === resolvingTicket.customerId || c.name === resolvingTicket.customerName
+    );
+
+    return (
+      <div className="space-y-6 animate-in fade-in duration-200">
+        {/* Header Strip with Breadcrumb Navigation */}
+        <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+              <button
+                type="button"
+                onClick={() => {
+                  setResolvingTicket(null);
+                  setResolutionNotes('');
+                  setCompensation('');
+                }}
+                className="flex items-center gap-1.5 hover:text-slate-900 transition-colors"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span>Back to Complaints</span>
+              </button>
+              <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+              <span className="font-semibold text-slate-900">
+                Resolve Ticket {resolvingTicket.ticketCode}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <span className="rounded-xl bg-slate-900 px-3 py-1 text-xs font-bold text-white tracking-wider">
+                {resolvingTicket.ticketCode}
+              </span>
+              <h1 className="text-xl font-bold tracking-tight text-slate-900">
+                Resolve Complaint Ticket
+              </h1>
+              {getPriorityBadge(resolvingTicket.priority)}
+              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold text-slate-700">
+                {resolvingTicket.category}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setResolvingTicket(null);
+                setResolutionNotes('');
+                setCompensation('');
+              }}
+              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        {/* Full-width Two-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column: Complaint Details & Customer Snapshot */}
+          <div className="lg:col-span-5 space-y-6">
+            {/* Customer Snapshot */}
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <span className="text-xs font-bold text-slate-900">Linked Client</span>
+                {custObj && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenCustomerProfile(custObj)}
+                    className="text-xs font-semibold text-blue-600 hover:underline"
+                  >
+                    View 360° Profile
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white font-bold text-sm shadow-xs">
+                  {resolvingTicket.customerName.charAt(0)}
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    {resolvingTicket.customerName}
+                  </h3>
+                  <p className="text-xs text-slate-500">{resolvingTicket.customerPhone}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Incident Description */}
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs space-y-3">
+              <div className="border-b border-slate-100 pb-3">
+                <span className="text-xs font-bold text-slate-900">Incident Reported</span>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Logged {resolvingTicket.createdAt} • Service: {resolvingTicket.serviceName}
+                </p>
+              </div>
+              <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-4 text-xs font-medium text-slate-800 leading-relaxed">
+                "{resolvingTicket.issue}"
+              </div>
+              <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
+                <span>Assigned Staff Handler:</span>
+                <span className="font-semibold text-slate-900">
+                  {resolvingTicket.assignedStaffName}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Clean Inline Resolution Form */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-4">
+                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                <h2 className="text-sm font-bold text-slate-900">
+                  Resolution Summary & Compensation
+                </h2>
+              </div>
+
+              <form onSubmit={handleConfirmResolve} className="mt-5 space-y-5">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Resolution Summary *
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={resolutionNotes}
+                    onChange={(e) => setResolutionNotes(e.target.value)}
+                    placeholder="Document the exact corrective actions taken, stylist debriefing, or direct client apology call..."
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 transition-all leading-relaxed"
+                  />
+                  <p className="mt-1 text-[11px] text-slate-400">
+                    This will be recorded permanently on the ticket and customer service history.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Compensation / Discount Given (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={compensation}
+                    onChange={(e) => setCompensation(e.target.value)}
+                    placeholder="e.g. Complimentary Hair Gloss Treatment Voucher or PKR 1,500 Store Credit"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/70 py-2.5 px-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 transition-all"
+                  />
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResolvingTicket(null);
+                      setResolutionNotes('');
+                      setCompensation('');
+                    }}
+                    className="rounded-full border border-slate-200 px-5 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-full bg-emerald-600 px-6 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-emerald-500 transition-colors flex items-center gap-2"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Mark as Resolved & Close Ticket</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -364,41 +544,41 @@ export const ComplaintsView: React.FC<ComplaintsViewProps> = ({
         </div>
       </div>
 
-      {/* 4. Log Complaint Modal */}
+      {/* 4. Log Complaint Drawer (Zero Backdrop Blur) */}
       {isLogModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex justify-end overflow-hidden">
           <div
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-slate-900/15 transition-opacity"
             onClick={() => setIsLogModalOpen(false)}
           />
-          <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl animate-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white">
-                  <AlertCircle className="h-4.5 w-4.5 text-amber-300" />
+          <div className="relative z-10 h-full w-full max-w-md bg-white border-l border-slate-200 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 p-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-xs">
+                  <AlertCircle className="h-5 w-5 text-amber-300" />
                 </div>
                 <div>
                   <h2 className="text-base font-bold text-slate-900">Log Customer Complaint</h2>
-                  <p className="text-xs text-slate-600">Register feedback ticket and assign an in-charge</p>
+                  <p className="text-xs text-slate-500">Register feedback ticket and assign staff in-charge</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsLogModalOpen(false)}
-                className="rounded-full p-1.5 text-slate-600 hover:bg-slate-100"
+                className="rounded-full p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateComplaint} className="mt-4 space-y-4">
+            <form onSubmit={handleCreateComplaint} className="flex-1 overflow-y-auto p-6 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   Customer *
                 </label>
                 <select
                   value={newCustId}
                   onChange={(e) => setNewCustId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 text-xs text-slate-900"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs text-slate-900"
                 >
                   {customers.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -410,13 +590,13 @@ export const ComplaintsView: React.FC<ComplaintsViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
                     Category
                   </label>
                   <select
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value as ComplaintCategory)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 text-xs text-slate-900"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs text-slate-900"
                   >
                     <option value="Service Quality">Service Quality</option>
                     <option value="Skin Irritation">Skin Irritation</option>
@@ -427,13 +607,13 @@ export const ComplaintsView: React.FC<ComplaintsViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
                     Priority
                   </label>
                   <select
                     value={newPriority}
                     onChange={(e) => setNewPriority(e.target.value as ComplaintPriority)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 text-xs text-slate-900"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs text-slate-900"
                   >
                     <option value="Low">Low</option>
                     <option value="Medium">Medium</option>
@@ -444,13 +624,13 @@ export const ComplaintsView: React.FC<ComplaintsViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   Assigned Staff Lead
                 </label>
                 <select
                   value={newStaff}
                   onChange={(e) => setNewStaff(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 text-xs text-slate-900"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs text-slate-900"
                 >
                   {staffList.map((st) => (
                     <option key={st.id} value={st.name}>
@@ -461,20 +641,20 @@ export const ComplaintsView: React.FC<ComplaintsViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   Incident Description *
                 </label>
                 <textarea
                   required
-                  rows={3}
+                  rows={4}
                   value={newIssue}
                   onChange={(e) => setNewIssue(e.target.value)}
                   placeholder="Describe the complaint in detail..."
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 text-xs text-slate-900 placeholder:text-slate-600 focus:bg-white"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white"
                 />
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsLogModalOpen(false)}
@@ -493,82 +673,7 @@ export const ComplaintsView: React.FC<ComplaintsViewProps> = ({
           </div>
         </div>
       )}
-
-      {/* 5. Resolve Complaint Dialog */}
-      {resolvingTicket && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"
-            onClick={() => setResolvingTicket(null)}
-          />
-          <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl animate-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                <h3 className="text-sm font-bold text-slate-900">
-                  Resolve Ticket {resolvingTicket.ticketCode}
-                </h3>
-              </div>
-              <button
-                onClick={() => setResolvingTicket(null)}
-                className="rounded-full p-1 text-slate-600 hover:bg-slate-100"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleConfirmResolve} className="mt-4 space-y-4">
-              <div className="rounded-xl bg-slate-50 p-3 text-xs">
-                <span className="font-semibold text-slate-700">{resolvingTicket.customerName}</span>
-                <p className="text-slate-600 mt-1">{resolvingTicket.issue}</p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Resolution Summary *
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  value={resolutionNotes}
-                  onChange={(e) => setResolutionNotes(e.target.value)}
-                  placeholder="Steps taken to resolve and satisfy client..."
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 text-xs text-slate-900"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Compensation / Discount Given (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={compensation}
-                  onChange={(e) => setCompensation(e.target.value)}
-                  placeholder="e.g. PKR 1,500 complimentary treatment voucher"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 text-xs text-slate-900"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setResolvingTicket(null)}
-                  className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-full bg-emerald-600 px-5 py-2 text-xs font-semibold text-white hover:bg-emerald-500"
-                >
-                  Mark as Resolved
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
+

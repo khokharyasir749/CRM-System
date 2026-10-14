@@ -86,8 +86,25 @@ export const MessagesView: React.FC<MessagesViewProps> = ({
     setTimeout(() => setCopiedId(null), 1500);
   };
 
-  const insertVariable = (varName: string) => {
-    setEditContent((prev) => `${prev} ${varName}`);
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  const insertVariableTag = (tag: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      setEditContent((prev) => `${prev} ${tag}`);
+      return;
+    }
+    const start = textarea.selectionStart ?? editContent.length;
+    const end = textarea.selectionEnd ?? editContent.length;
+    const text = editContent;
+    const newText = text.substring(0, start) + tag + text.substring(end);
+    setEditContent(newText);
+
+    // Restore cursor position immediately after the inserted tag
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + tag.length, start + tag.length);
+    }, 0);
   };
 
   // Sample preview rendering
@@ -267,7 +284,8 @@ export const MessagesView: React.FC<MessagesViewProps> = ({
                       <button
                         key={v}
                         type="button"
-                        onClick={() => insertVariable(v)}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => insertVariableTag(v)}
                         className="rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-mono text-slate-700 hover:bg-slate-200 transition-colors"
                       >
                         {v}
@@ -282,6 +300,7 @@ export const MessagesView: React.FC<MessagesViewProps> = ({
                     WhatsApp Message Text
                   </label>
                   <textarea
+                    ref={textareaRef}
                     rows={4}
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}

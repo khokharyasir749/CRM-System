@@ -7,7 +7,6 @@ import { KpiCards } from '@/components/dashboard/KpiCards';
 import { AnalyticsPerformance } from '@/components/dashboard/AnalyticsPerformance';
 import { AppointmentsTable } from '@/components/dashboard/AppointmentsTable';
 import { NewAppointmentModal } from '@/components/dashboard/NewAppointmentModal';
-import { AppointmentDetailModal } from '@/components/dashboard/AppointmentDetailModal';
 import { CustomizeWidgetsModal } from '@/components/dashboard/CustomizeWidgetsModal';
 import { CustomerListView } from '@/components/customers/CustomerListView';
 import { CustomerProfileDrawer } from '@/components/customers/CustomerProfileDrawer';
@@ -23,6 +22,7 @@ import { MessagesView } from '@/components/messages/MessagesView';
 import { ReportsView } from '@/components/reports/ReportsView';
 import { SettingsView } from '@/components/settings/SettingsView';
 import { NewAppointmentPage } from '@/components/appointments/NewAppointmentPage';
+import { AppointmentDetailPage } from '@/components/appointments/AppointmentDetailPage';
 import { AddCustomerPage } from '@/components/customers/AddCustomerPage';
 import { CustomerDetailPage } from '@/components/customers/CustomerDetailPage';
 import { RecordPaymentPage } from '@/components/payments/RecordPaymentPage';
@@ -63,6 +63,7 @@ import { ShieldAlert } from 'lucide-react';
 export type ActiveView =
   | { type: 'tab'; tab: string }
   | { type: 'new-appointment'; preselectedCustomerId?: string | null }
+  | { type: 'appointment-detail'; appointmentId: string }
   | { type: 'add-customer' }
   | { type: 'customer-detail'; customerId: string }
   | { type: 'record-payment'; customerId?: string | null; invoiceId?: string | null }
@@ -76,7 +77,7 @@ export default function DashboardPage() {
 
   const currentTab = useMemo(() => {
     if (activeView.type === 'tab') return activeView.tab;
-    if (activeView.type === 'new-appointment') return 'appointments';
+    if (activeView.type === 'new-appointment' || activeView.type === 'appointment-detail') return 'appointments';
     if (activeView.type === 'add-customer' || activeView.type === 'customer-detail') return 'customers';
     if (activeView.type === 'record-payment') return 'payments';
     if (activeView.type === 'log-complaint') return 'complaints';
@@ -543,6 +544,51 @@ export default function DashboardPage() {
               />
             )}
 
+            {/* DEDICATED FULL-PAGE 1B: SALON BOOKING DETAILS */}
+            {activeView.type === 'appointment-detail' && (() => {
+              const app = appointments.find((a) => a.id === activeView.appointmentId) || appointments[0];
+              if (!app) return null;
+              return (
+                <AppointmentDetailPage
+                  appointment={app}
+                  onBack={() => setActiveView({ type: 'tab', tab: 'appointments' })}
+                  onUpdateStatus={handleUpdateAppointmentStatus}
+                  onUpdatePayment={handleUpdateAppointmentPayment}
+                  onViewCustomer={(cust) =>
+                    setActiveView({ type: 'customer-detail', customerId: cust.id })
+                  }
+                  onPrintReceipt={(a) => {
+                    const inv = invoices.find((i) => i.appointmentId === a.id) || {
+                      id: `inv-${a.id}`,
+                      invoiceCode: `#INV-${a.bookingCode.replace('#BK-', '')}`,
+                      customerId: a.customer.id,
+                      customerName: a.customer.name,
+                      customerPhone: a.customer.phone,
+                      appointmentId: a.id,
+                      serviceName: a.service,
+                      totalAmount: a.amount,
+                      paidAmount: a.paidAmount,
+                      dueBalance: a.amount - a.paidAmount,
+                      paymentStatus: a.paymentStatus,
+                      paymentMethod: 'Cash' as const,
+                      recordedDate: a.date,
+                      staffName: a.stylist.name,
+                      notes: `Receipt for ${a.service}`,
+                    };
+                    setSelectedInvoiceForReceipt(inv);
+                  }}
+                  onSettleBalance={(a) => {
+                    const inv = invoices.find((i) => i.appointmentId === a.id);
+                    setActiveView({
+                      type: 'record-payment',
+                      customerId: a.customer.id,
+                      invoiceId: inv?.id,
+                    });
+                  }}
+                />
+              );
+            })()}
+
             {/* DEDICATED FULL-PAGE 2: ADD NEW CUSTOMER */}
             {activeView.type === 'add-customer' && (
               <AddCustomerPage
@@ -567,6 +613,9 @@ export default function DashboardPage() {
                   }
                   onRecordPayment={(c) =>
                     setActiveView({ type: 'record-payment', customerId: c.id })
+                  }
+                  onViewAppointment={(app) =>
+                    setActiveView({ type: 'appointment-detail', appointmentId: app.id })
                   }
                 />
               );
@@ -619,7 +668,9 @@ export default function DashboardPage() {
                 {widgets.appointmentsTable && (
                   <AppointmentsTable
                     appointments={appointments}
-                    onViewDetails={(app) => setSelectedAppointmentForDetail(app)}
+                    onViewDetails={(app) =>
+                      setActiveView({ type: 'appointment-detail', appointmentId: app.id })
+                    }
                     onViewCustomer={(cust) =>
                       setActiveView({ type: 'customer-detail', customerId: cust.id })
                     }
@@ -638,7 +689,9 @@ export default function DashboardPage() {
                 appointments={appointments}
                 customers={customers}
                 onOpenNewAppointment={() => setActiveView({ type: 'new-appointment' })}
-                onViewAppointmentDetails={(app) => setSelectedAppointmentForDetail(app)}
+                onViewAppointmentDetails={(app) =>
+                  setActiveView({ type: 'appointment-detail', appointmentId: app.id })
+                }
                 onViewCustomer={(cust) =>
                   setActiveView({ type: 'customer-detail', customerId: cust.id })
                 }
@@ -760,13 +813,6 @@ export default function DashboardPage() {
         </main>
       </div>
 
-      {/* Appointment Detail Modal (Inspection only) */}
-      <AppointmentDetailModal
-        appointment={selectedAppointmentForDetail}
-        onClose={() => setSelectedAppointmentForDetail(null)}
-        onUpdateStatus={handleUpdateAppointmentStatus}
-        onUpdatePayment={handleUpdateAppointmentPayment}
-      />
 
       {/* Printable Receipt Modal */}
       <ReceiptModal
