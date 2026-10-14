@@ -29,6 +29,7 @@ interface AppointmentsViewProps {
   customers: Customer[];
   onOpenNewAppointment: () => void;
   onViewAppointmentDetails: (appointment: Appointment) => void;
+  onViewCustomer?: (customer: Customer) => void;
   onUpdateStatus: (id: string, newStatus: BookingStatus) => void;
 }
 
@@ -37,6 +38,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
   customers,
   onOpenNewAppointment,
   onViewAppointmentDetails,
+  onViewCustomer,
   onUpdateStatus,
 }) => {
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
@@ -418,8 +420,13 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
                               alt={app.customer.name}
                               className="h-7 w-7 rounded-full object-cover"
                             />
-                            <div>
-                              <p className="font-semibold text-slate-900">{app.customer.name}</p>
+                            <div
+                              onClick={() => onViewCustomer && onViewCustomer(app.customer)}
+                              className={onViewCustomer ? 'cursor-pointer group' : ''}
+                            >
+                              <p className={`font-semibold text-slate-900 ${onViewCustomer ? 'group-hover:text-blue-600' : ''}`}>
+                                {app.customer.name}
+                              </p>
                               <p className="text-[10px] text-slate-600">{app.customer.phone}</p>
                             </div>
                           </div>

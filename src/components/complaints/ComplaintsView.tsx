@@ -34,6 +34,7 @@ interface ComplaintsViewProps {
   onOpenCustomerProfile: (customer: Customer) => void;
   onAddComplaint: (newComplaint: ComplaintTicket) => void;
   onUpdateComplaint: (updated: ComplaintTicket) => void;
+  onOpenLogComplaint?: () => void;
 }
 
 export const ComplaintsView: React.FC<ComplaintsViewProps> = ({
@@ -43,6 +44,7 @@ export const ComplaintsView: React.FC<ComplaintsViewProps> = ({
   onOpenCustomerProfile,
   onAddComplaint,
   onUpdateComplaint,
+  onOpenLogComplaint,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | ComplaintStatus>('All');
@@ -244,7 +246,7 @@ export const ComplaintsView: React.FC<ComplaintsViewProps> = ({
           </div>
 
           <button
-            onClick={() => setIsLogModalOpen(true)}
+            onClick={() => (onOpenLogComplaint ? onOpenLogComplaint() : setIsLogModalOpen(true))}
             className="flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 transition-colors shrink-0"
           >
             <Plus className="h-3.5 w-3.5" />

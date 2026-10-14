@@ -15,11 +15,12 @@ import {
   ChevronRight,
   ArrowUpDown,
 } from 'lucide-react';
-import { Appointment, BookingStatus, PaymentStatus } from '@/types/crm';
+import { Appointment, BookingStatus, Customer, PaymentStatus } from '@/types/crm';
 
 interface AppointmentsTableProps {
   appointments: Appointment[];
   onViewDetails: (appointment: Appointment) => void;
+  onViewCustomer?: (customer: Customer) => void;
   onUpdateStatus: (id: string, newStatus: BookingStatus) => void;
   onUpdatePayment: (id: string, paymentStatus: PaymentStatus) => void;
   onDeleteAppointment: (id: string) => void;
@@ -30,6 +31,7 @@ interface AppointmentsTableProps {
 export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
   appointments,
   onViewDetails,
+  onViewCustomer,
   onUpdateStatus,
   onUpdatePayment,
   onDeleteAppointment,
@@ -249,7 +251,7 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
                         className="h-8 w-8 rounded-full object-cover ring-1 ring-slate-100"
                       />
                       <span
-                        onClick={() => onViewDetails(app)}
+                        onClick={() => (onViewCustomer ? onViewCustomer(app.customer) : onViewDetails(app))}
                         className="font-bold text-slate-900 hover:text-blue-600 cursor-pointer text-xs"
                       >
                         {app.customer.name}

@@ -24,6 +24,7 @@ interface FollowUpsViewProps {
   onAddFollowUp: (task: FollowUpTask) => void;
   onUpdateStatus: (id: string, newStatus: FollowUpStatus) => void;
   onOpenCustomerProfile: (customer: Customer) => void;
+  onOpenCreateTask?: () => void;
 }
 
 export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
@@ -33,6 +34,7 @@ export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
   onAddFollowUp,
   onUpdateStatus,
   onOpenCustomerProfile,
+  onOpenCreateTask,
 }) => {
   const [selectedFilter, setSelectedFilter] = useState<'All' | 'Due Today' | 'Overdue' | 'Upcoming' | 'Completed'>('All');
   const [staffFilter, setStaffFilter] = useState('All');
@@ -206,7 +208,7 @@ export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
           </div>
 
           <button
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={() => (onOpenCreateTask ? onOpenCreateTask() : setIsCreateModalOpen(true))}
             className="flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 transition-colors shrink-0"
           >
             <Plus className="h-3.5 w-3.5" />

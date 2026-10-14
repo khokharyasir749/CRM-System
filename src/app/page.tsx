@@ -22,6 +22,12 @@ import { StaffView } from '@/components/staff/StaffView';
 import { MessagesView } from '@/components/messages/MessagesView';
 import { ReportsView } from '@/components/reports/ReportsView';
 import { SettingsView } from '@/components/settings/SettingsView';
+import { NewAppointmentPage } from '@/components/appointments/NewAppointmentPage';
+import { AddCustomerPage } from '@/components/customers/AddCustomerPage';
+import { CustomerDetailPage } from '@/components/customers/CustomerDetailPage';
+import { RecordPaymentPage } from '@/components/payments/RecordPaymentPage';
+import { LogComplaintPage } from '@/components/complaints/LogComplaintPage';
+import { CreateFollowUpPage } from '@/components/followups/CreateFollowUpPage';
 import { ToastContainer, ToastMessage } from '@/components/ui/Toast';
 
 import {
@@ -54,10 +60,29 @@ import {
 } from '@/types/crm';
 import { ShieldAlert } from 'lucide-react';
 
+export type ActiveView =
+  | { type: 'tab'; tab: string }
+  | { type: 'new-appointment'; preselectedCustomerId?: string | null }
+  | { type: 'add-customer' }
+  | { type: 'customer-detail'; customerId: string }
+  | { type: 'record-payment'; customerId?: string | null; invoiceId?: string | null }
+  | { type: 'log-complaint'; customerId?: string | null }
+  | { type: 'create-followup'; customerId?: string | null };
+
 export default function DashboardPage() {
-  const [currentTab, setCurrentTab] = useState('dashboard');
+  const [activeView, setActiveView] = useState<ActiveView>({ type: 'tab', tab: 'dashboard' });
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const currentTab = useMemo(() => {
+    if (activeView.type === 'tab') return activeView.tab;
+    if (activeView.type === 'new-appointment') return 'appointments';
+    if (activeView.type === 'add-customer' || activeView.type === 'customer-detail') return 'customers';
+    if (activeView.type === 'record-payment') return 'payments';
+    if (activeView.type === 'log-complaint') return 'complaints';
+    if (activeView.type === 'create-followup') return 'follow-ups';
+    return 'dashboard';
+  }, [activeView]);
 
   // Role Permissions Simulation Mode ('admin' vs 'staff')
   const [roleMode, setRoleMode] = useState<RoleMode>('admin');
@@ -429,7 +454,7 @@ export default function DashboardPage() {
       {/* Persistent Left Sidebar */}
       <Sidebar
         currentTab={currentTab}
-        onTabChange={(tab) => setCurrentTab(tab)}
+        onTabChange={(tab) => setActiveView({ type: 'tab', tab })}
         isMobileOpen={isMobileOpen}
         onCloseMobile={() => setIsMobileOpen(false)}
         roleMode={roleMode}
@@ -441,7 +466,19 @@ export default function DashboardPage() {
         {/* Persistent Top Navigation Bar */}
         <Header
           title={
-            currentTab === 'dashboard'
+            activeView.type === 'new-appointment'
+              ? 'Book New Appointment'
+              : activeView.type === 'add-customer'
+              ? 'Add New Client'
+              : activeView.type === 'customer-detail'
+              ? 'Client 360° Profile'
+              : activeView.type === 'record-payment'
+              ? 'Settle Invoice & Payment'
+              : activeView.type === 'log-complaint'
+              ? 'Log Incident Ticket'
+              : activeView.type === 'create-followup'
+              ? 'Schedule Care Follow-up'
+              : currentTab === 'dashboard'
               ? 'Dashboard'
               : currentTab === 'appointments'
               ? 'Appointments Schedule'
@@ -461,13 +498,10 @@ export default function DashboardPage() {
               ? 'Reports & Salon Analytics'
               : currentTab === 'settings'
               ? 'Salon Configuration & Settings'
-              : currentTab.charAt(0).toUpperCase() + currentTab.slice(1).replace('-', ' ')
+              : 'Regular CRM'
           }
           onOpenMobileMenu={() => setIsMobileOpen(true)}
-          onNewAppointment={() => {
-            setPreselectedCustomerForBooking(null);
-            setIsNewAppointmentModalOpen(true);
-          }}
+          onNewAppointment={() => setActiveView({ type: 'new-appointment' })}
           onCustomizeWidgets={() => setIsCustomizeWidgetsOpen(true)}
           onExport={handleExport}
           searchQuery={searchQuery}
@@ -497,8 +531,84 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* TAB 1: MAIN DASHBOARD */}
-            {currentTab === 'dashboard' && (
+            {/* DEDICATED FULL-PAGE 1: BOOK NEW APPOINTMENT */}
+            {activeView.type === 'new-appointment' && (
+              <NewAppointmentPage
+                onBack={() => setActiveView({ type: 'tab', tab: 'appointments' })}
+                onAddAppointment={handleAddAppointment}
+                customers={customers}
+                existingAppointments={appointments}
+                preselectedCustomerId={activeView.preselectedCustomerId}
+                onNavigateAddCustomer={() => setActiveView({ type: 'add-customer' })}
+              />
+            )}
+
+            {/* DEDICATED FULL-PAGE 2: ADD NEW CUSTOMER */}
+            {activeView.type === 'add-customer' && (
+              <AddCustomerPage
+                onBack={() => setActiveView({ type: 'tab', tab: 'customers' })}
+                onAddCustomer={handleAddCustomer}
+              />
+            )}
+
+            {/* DEDICATED FULL-PAGE 3: CUSTOMER 360° PROFILE */}
+            {activeView.type === 'customer-detail' && (() => {
+              const cust = customers.find((c) => c.id === activeView.customerId) || customers[0];
+              return (
+                <CustomerDetailPage
+                  customer={cust}
+                  onBack={() => setActiveView({ type: 'tab', tab: 'customers' })}
+                  appointments={appointments}
+                  invoices={invoices}
+                  complaints={complaints}
+                  followUps={followUps}
+                  onBookAppointment={(c) =>
+                    setActiveView({ type: 'new-appointment', preselectedCustomerId: c.id })
+                  }
+                  onRecordPayment={(c) =>
+                    setActiveView({ type: 'record-payment', customerId: c.id })
+                  }
+                />
+              );
+            })()}
+
+            {/* DEDICATED FULL-PAGE 4: RECORD PAYMENT / SETTLE INVOICE */}
+            {activeView.type === 'record-payment' && (
+              <RecordPaymentPage
+                onBack={() => setActiveView({ type: 'tab', tab: 'payments' })}
+                customers={customers}
+                invoices={invoices}
+                preselectedCustomerId={activeView.customerId}
+                preselectedInvoiceId={activeView.invoiceId}
+                onSavePayment={handleSavePayment}
+                onViewReceipt={(inv) => setSelectedInvoiceForReceipt(inv)}
+              />
+            )}
+
+            {/* DEDICATED FULL-PAGE 5: LOG COMPLAINT */}
+            {activeView.type === 'log-complaint' && (
+              <LogComplaintPage
+                onBack={() => setActiveView({ type: 'tab', tab: 'complaints' })}
+                customers={customers}
+                staffList={staffList}
+                onAddComplaint={handleAddComplaint}
+                preselectedCustomerId={activeView.customerId}
+              />
+            )}
+
+            {/* DEDICATED FULL-PAGE 6: CREATE FOLLOW-UP */}
+            {activeView.type === 'create-followup' && (
+              <CreateFollowUpPage
+                onBack={() => setActiveView({ type: 'tab', tab: 'follow-ups' })}
+                customers={customers}
+                staffList={staffList}
+                onAddFollowUp={handleAddFollowUp}
+                preselectedCustomerId={activeView.customerId}
+              />
+            )}
+
+            {/* MAIN DASHBOARD */}
+            {activeView.type === 'tab' && currentTab === 'dashboard' && (
               <>
                 {widgets.kpiCards && <KpiCards stats={stats} />}
 
@@ -510,6 +620,9 @@ export default function DashboardPage() {
                   <AppointmentsTable
                     appointments={appointments}
                     onViewDetails={(app) => setSelectedAppointmentForDetail(app)}
+                    onViewCustomer={(cust) =>
+                      setActiveView({ type: 'customer-detail', customerId: cust.id })
+                    }
                     onUpdateStatus={handleUpdateAppointmentStatus}
                     onUpdatePayment={handleUpdateAppointmentPayment}
                     onDeleteAppointment={handleDeleteAppointment}
@@ -519,71 +632,89 @@ export default function DashboardPage() {
               </>
             )}
 
-            {/* TAB 2: APPOINTMENTS MODULE */}
-            {currentTab === 'appointments' && (
+            {/* APPOINTMENTS MODULE */}
+            {activeView.type === 'tab' && currentTab === 'appointments' && (
               <AppointmentsView
                 appointments={appointments}
                 customers={customers}
-                onOpenNewAppointment={() => {
-                  setPreselectedCustomerForBooking(null);
-                  setIsNewAppointmentModalOpen(true);
-                }}
+                onOpenNewAppointment={() => setActiveView({ type: 'new-appointment' })}
                 onViewAppointmentDetails={(app) => setSelectedAppointmentForDetail(app)}
+                onViewCustomer={(cust) =>
+                  setActiveView({ type: 'customer-detail', customerId: cust.id })
+                }
                 onUpdateStatus={handleUpdateAppointmentStatus}
               />
             )}
 
-            {/* TAB 3: CUSTOMERS MODULE */}
-            {currentTab === 'customers' && (
+            {/* CUSTOMERS MODULE */}
+            {activeView.type === 'tab' && currentTab === 'customers' && (
               <CustomerListView
                 customers={customers}
-                onSelectCustomer={(cust) => setSelectedCustomerForDrawer(cust)}
-                onOpenAddModal={() => setIsAddCustomerModalOpen(true)}
-                onQuickBook={handleQuickBookCustomer}
-                onRecordPayment={handleRecordPaymentCustomer}
+                onSelectCustomer={(cust) =>
+                  setActiveView({ type: 'customer-detail', customerId: cust.id })
+                }
+                onOpenAddModal={() => setActiveView({ type: 'add-customer' })}
+                onQuickBook={(cust) =>
+                  setActiveView({ type: 'new-appointment', preselectedCustomerId: cust.id })
+                }
+                onRecordPayment={(cust) =>
+                  setActiveView({ type: 'record-payment', customerId: cust.id })
+                }
               />
             )}
 
-            {/* TAB 4: PAYMENTS & BALANCES MODULE */}
-            {currentTab === 'payments' && (
+            {/* PAYMENTS & BALANCES MODULE */}
+            {activeView.type === 'tab' && currentTab === 'payments' && (
               <PaymentsView
                 invoices={invoices}
                 customers={customers}
-                onOpenRecordPayment={(cust) => {
-                  setPreselectedCustomerForPayment(cust || null);
-                  setIsRecordPaymentModalOpen(true);
-                }}
+                onOpenRecordPayment={(cust) =>
+                  setActiveView({ type: 'record-payment', customerId: cust?.id })
+                }
                 onViewReceipt={(inv) => setSelectedInvoiceForReceipt(inv)}
-                onSettleInvoice={handleSettleInvoice}
+                onSettleInvoice={(invId) => {
+                  const inv = invoices.find((i) => i.id === invId);
+                  setActiveView({
+                    type: 'record-payment',
+                    customerId: inv?.customerId,
+                    invoiceId: invId,
+                  });
+                }}
               />
             )}
 
-            {/* TAB 5: COMPLAINTS MANAGEMENT */}
-            {currentTab === 'complaints' && (
+            {/* COMPLAINTS MANAGEMENT */}
+            {activeView.type === 'tab' && currentTab === 'complaints' && (
               <ComplaintsView
                 complaints={complaints}
                 customers={customers}
                 staffList={staffList}
-                onOpenCustomerProfile={(cust) => setSelectedCustomerForDrawer(cust)}
+                onOpenCustomerProfile={(cust) =>
+                  setActiveView({ type: 'customer-detail', customerId: cust.id })
+                }
                 onAddComplaint={handleAddComplaint}
                 onUpdateComplaint={handleUpdateComplaint}
+                onOpenLogComplaint={() => setActiveView({ type: 'log-complaint' })}
               />
             )}
 
-            {/* TAB 6: FOLLOW-UPS MANAGEMENT */}
-            {currentTab === 'follow-ups' && (
+            {/* FOLLOW-UPS MANAGEMENT */}
+            {activeView.type === 'tab' && currentTab === 'follow-ups' && (
               <FollowUpsView
                 followUps={followUps}
                 customers={customers}
                 staffList={staffList}
                 onAddFollowUp={handleAddFollowUp}
                 onUpdateStatus={handleUpdateFollowUpStatus}
-                onOpenCustomerProfile={(cust) => setSelectedCustomerForDrawer(cust)}
+                onOpenCustomerProfile={(cust) =>
+                  setActiveView({ type: 'customer-detail', customerId: cust.id })
+                }
+                onOpenCreateTask={() => setActiveView({ type: 'create-followup' })}
               />
             )}
 
-            {/* TAB 7: MESSAGES & TEMPLATES */}
-            {currentTab === 'messages' && (
+            {/* MESSAGES & TEMPLATES */}
+            {activeView.type === 'tab' && currentTab === 'messages' && (
               <MessagesView
                 templates={messageTemplates}
                 conversations={omnichannelChats}
@@ -592,8 +723,8 @@ export default function DashboardPage() {
               />
             )}
 
-            {/* TAB 8: STAFF & ROLES */}
-            {currentTab === 'staff' && (
+            {/* STAFF & ROLES */}
+            {activeView.type === 'tab' && currentTab === 'staff' && (
               <StaffView
                 staffList={staffList}
                 roleMode={roleMode}
@@ -603,8 +734,8 @@ export default function DashboardPage() {
               />
             )}
 
-            {/* TAB 9: REPORTS & ANALYTICS */}
-            {currentTab === 'reports' && (
+            {/* REPORTS & ANALYTICS */}
+            {activeView.type === 'tab' && currentTab === 'reports' && (
               <ReportsView
                 staffList={staffList}
                 roleMode={roleMode}
@@ -612,8 +743,8 @@ export default function DashboardPage() {
               />
             )}
 
-            {/* TAB 10: SETTINGS */}
-            {currentTab === 'settings' && (
+            {/* SETTINGS */}
+            {activeView.type === 'tab' && currentTab === 'settings' && (
               <SettingsView
                 settings={salonSettings}
                 services={salonServices}
@@ -629,57 +760,12 @@ export default function DashboardPage() {
         </main>
       </div>
 
-      {/* Customer 360° Profile Drawer */}
-      <CustomerProfileDrawer
-        customer={selectedCustomerForDrawer}
-        onClose={() => setSelectedCustomerForDrawer(null)}
-        appointments={appointments}
-        invoices={invoices}
-        complaints={complaints}
-        followUps={followUps}
-        onQuickBook={handleQuickBookCustomer}
-        onRecordPayment={handleRecordPaymentCustomer}
-      />
-
-      {/* Add New Customer Modal */}
-      <AddCustomerModal
-        isOpen={isAddCustomerModalOpen}
-        onClose={() => setIsAddCustomerModalOpen(false)}
-        onAddCustomer={handleAddCustomer}
-      />
-
-      {/* New Appointment Modal */}
-      <NewAppointmentModal
-        isOpen={isNewAppointmentModalOpen}
-        onClose={() => {
-          setIsNewAppointmentModalOpen(false);
-          setPreselectedCustomerForBooking(null);
-        }}
-        onAddAppointment={handleAddAppointment}
-        customers={customers}
-        existingAppointments={appointments}
-        preselectedCustomer={preselectedCustomerForBooking}
-      />
-
-      {/* Appointment Detail Modal */}
+      {/* Appointment Detail Modal (Inspection only) */}
       <AppointmentDetailModal
         appointment={selectedAppointmentForDetail}
         onClose={() => setSelectedAppointmentForDetail(null)}
         onUpdateStatus={handleUpdateAppointmentStatus}
         onUpdatePayment={handleUpdateAppointmentPayment}
-      />
-
-      {/* Record Payment Modal */}
-      <RecordPaymentModal
-        isOpen={isRecordPaymentModalOpen}
-        onClose={() => {
-          setIsRecordPaymentModalOpen(false);
-          setPreselectedCustomerForPayment(null);
-        }}
-        customers={customers}
-        invoices={invoices}
-        preselectedCustomer={preselectedCustomerForPayment}
-        onSavePayment={handleSavePayment}
       />
 
       {/* Printable Receipt Modal */}
