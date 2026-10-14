@@ -11,12 +11,53 @@ import {
   ThumbsUp,
 } from 'lucide-react';
 
+export type TimeframeOption = 'This Month' | 'Last 6 Months' | 'This Year';
+
 export const AnalyticsPerformance: React.FC = () => {
-  const [timeRange, setTimeRange] = useState('This Month');
+  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeOption>('This Month');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  // Timeframe-specific metrics and month highlight predicate
+  const timeframeMetrics: Record<
+    TimeframeOption,
+    {
+      revenue: string;
+      revenueTrend: string;
+      expenses: string;
+      expensesTrend: string;
+      isMonthActive: (month: string, index: number) => boolean;
+    }
+  > = {
+    'This Month': {
+      revenue: 'PKR 485,000',
+      revenueTrend: '3.4%',
+      expenses: 'PKR 168,000',
+      expensesTrend: '1.2%',
+      // Highlight: Only the active current month (Oct, index 9)
+      isMonthActive: (_month, index) => index === 9,
+    },
+    'Last 6 Months': {
+      revenue: 'PKR 2,840,000',
+      revenueTrend: '8.1%',
+      expenses: 'PKR 980,000',
+      expensesTrend: '4.5%',
+      // Highlight: Last 6 months (May, Jun, Jul, Aug, Sep, Oct - indices 4 to 9)
+      isMonthActive: (_month, index) => index >= 4 && index <= 9,
+    },
+    'This Year': {
+      revenue: 'PKR 5,420,000',
+      revenueTrend: '14.2%',
+      expenses: 'PKR 1,890,000',
+      expensesTrend: '6.8%',
+      // Highlight: All 12 months render in full vibrant colors
+      isMonthActive: () => true,
+    },
+  };
+
+  const currentMetrics = timeframeMetrics[selectedTimeframe];
+
   // 12 Months data matching Cemdash reference
-  const chartData = [
+  const baseChartData = [
     { month: 'Jan', revenue: 1400, expenses: 1100 },
     { month: 'Feb', revenue: 1800, expenses: 1400 },
     { month: 'Mar', revenue: 2100, expenses: 1600 },
@@ -26,7 +67,7 @@ export const AnalyticsPerformance: React.FC = () => {
     { month: 'Jul', revenue: 3200, expenses: 2500 },
     { month: 'Aug', revenue: 2200, expenses: 1800 },
     { month: 'Sep', revenue: 2600, expenses: 2100 },
-    { month: 'Oct', revenue: 3800, expenses: 3100, isActive: true }, // Highlighted Month
+    { month: 'Oct', revenue: 3800, expenses: 3100 },
     { month: 'Nov', revenue: 2500, expenses: 1900 },
     { month: 'Dec', revenue: 2800, expenses: 2200 },
   ];
@@ -50,42 +91,48 @@ export const AnalyticsPerformance: React.FC = () => {
               <div className="relative">
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 transition-colors shadow-2xs"
+                  className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
                 >
                   <Calendar className="h-3.5 w-3.5 text-slate-500" />
-                  <span>{timeRange}</span>
-                  <ChevronDown className="h-3 w-3 text-slate-400" />
+                  <span>{selectedTimeframe}</span>
+                  <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-36 rounded-2xl border border-slate-200 bg-white p-1 shadow-xl ring-1 ring-black/5 z-20">
-                    {['This Month', 'Last 6 Months', 'This Year'].map((range) => (
-                      <button
-                        key={range}
-                        onClick={() => {
-                          setTimeRange(range);
-                          setIsDropdownOpen(false);
-                        }}
-                        className={`flex w-full items-center rounded-xl px-3 py-1.5 text-xs font-semibold ${
-                          timeRange === range
-                            ? 'bg-slate-900 text-white'
-                            : 'text-slate-700 hover:bg-slate-100'
-                        }`}
-                      >
-                        {range}
-                      </button>
-                    ))}
-                  </div>
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setIsDropdownOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-40 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl ring-1 ring-black/5 z-20 animate-in fade-in slide-in-from-top-1 duration-150">
+                      {(['This Month', 'Last 6 Months', 'This Year'] as TimeframeOption[]).map((range) => (
+                        <button
+                          key={range}
+                          onClick={() => {
+                            setSelectedTimeframe(range);
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`flex w-full items-center rounded-xl px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
+                            selectedTimeframe === range
+                              ? 'bg-slate-900 text-white shadow-xs'
+                              : 'text-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          {range}
+                        </button>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
 
-              <button className="text-slate-400 hover:text-slate-700 p-1">
+              <button className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer">
                 <MoreHorizontal className="h-4 w-4" />
               </button>
             </div>
           </div>
 
-          {/* Metric summary strip: Revenue and Expenses side-by-side */}
+          {/* Metric summary strip: Dynamic Revenue and Expenses side-by-side */}
           <div className="mt-2 flex flex-wrap items-center gap-8 sm:gap-12 border-b border-slate-100 pb-5">
             {/* Revenue */}
             <div className="flex flex-col">
@@ -94,12 +141,12 @@ export const AnalyticsPerformance: React.FC = () => {
                 <span className="text-xs font-semibold text-slate-600">Revenue</span>
               </div>
               <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-xl font-bold tracking-tight text-slate-900">
-                  PKR 485,000
+                <span className="text-xl font-bold tracking-tight text-slate-900 transition-all duration-300">
+                  {currentMetrics.revenue}
                 </span>
                 <span className="inline-flex items-center gap-0.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-600">
                   <ArrowUpRight className="h-3 w-3 stroke-[2.5]" />
-                  3.4%
+                  {currentMetrics.revenueTrend}
                 </span>
               </div>
               <span className="text-[11px] font-medium text-slate-400 mt-0.5">
@@ -114,12 +161,12 @@ export const AnalyticsPerformance: React.FC = () => {
                 <span className="text-xs font-semibold text-slate-600">Expenses</span>
               </div>
               <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-xl font-bold tracking-tight text-slate-900">
-                  PKR 168,000
+                <span className="text-xl font-bold tracking-tight text-slate-900 transition-all duration-300">
+                  {currentMetrics.expenses}
                 </span>
                 <span className="inline-flex items-center gap-0.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-600">
                   <ArrowUpRight className="h-3 w-3 stroke-[2.5]" />
-                  1.2%
+                  {currentMetrics.expensesTrend}
                 </span>
               </div>
               <span className="text-[11px] font-medium text-slate-400 mt-0.5">
@@ -131,7 +178,7 @@ export const AnalyticsPerformance: React.FC = () => {
           {/* Bar Chart Visualization */}
           <div className="mt-6 flex">
             {/* Y-axis Ticks */}
-            <div className="flex flex-col justify-between pr-3 text-[11px] font-semibold text-slate-400 h-44 text-right">
+            <div className="flex flex-col justify-between pr-3 text-[11px] font-semibold text-slate-400 h-44 text-right select-none">
               <span>PKR 400K</span>
               <span>PKR 300K</span>
               <span>PKR 200K</span>
@@ -142,7 +189,8 @@ export const AnalyticsPerformance: React.FC = () => {
             {/* Bars Area */}
             <div className="flex-1">
               <div className="flex items-end justify-between gap-1 sm:gap-2 h-44 border-b border-slate-100 pb-1">
-                {chartData.map((d) => {
+                {baseChartData.map((d, index) => {
+                  const isActive = currentMetrics.isMonthActive(d.month, index);
                   const revHeight = (d.revenue / maxVal) * chartHeight;
                   const expHeight = (d.expenses / maxVal) * chartHeight;
 
@@ -156,19 +204,19 @@ export const AnalyticsPerformance: React.FC = () => {
                         {/* Revenue Bar */}
                         <div
                           style={{ height: `${revHeight}px` }}
-                          className={`w-2.5 sm:w-3 rounded-t-sm transition-all duration-200 ${
-                            d.isActive
-                              ? 'bg-[#D946EF] shadow-xs'
-                              : 'bg-[#FCE7F3] group-hover:bg-[#F472B6]'
+                          className={`w-2.5 sm:w-3 rounded-t-sm transition-all duration-300 ${
+                            isActive
+                              ? 'bg-[#D946EF] shadow-xs opacity-100'
+                              : 'bg-[#FCE7F3] opacity-65 group-hover:opacity-100 group-hover:bg-[#F472B6]'
                           }`}
                         />
                         {/* Expenses Bar */}
                         <div
                           style={{ height: `${expHeight}px` }}
-                          className={`w-2.5 sm:w-3 rounded-t-sm transition-all duration-200 ${
-                            d.isActive
-                              ? 'bg-[#0284C7] shadow-xs'
-                              : 'bg-[#E0F2FE] group-hover:bg-[#38BDF8]'
+                          className={`w-2.5 sm:w-3 rounded-t-sm transition-all duration-300 ${
+                            isActive
+                              ? 'bg-[#0284C7] shadow-xs opacity-100'
+                              : 'bg-[#E0F2FE] opacity-65 group-hover:opacity-100 group-hover:bg-[#38BDF8]'
                           }`}
                         />
                       </div>
@@ -179,16 +227,19 @@ export const AnalyticsPerformance: React.FC = () => {
 
               {/* X-axis Month Labels */}
               <div className="flex items-center justify-between pt-2">
-                {chartData.map((d) => (
-                  <span
-                    key={d.month}
-                    className={`text-[11px] font-semibold transition-colors flex-1 text-center ${
-                      d.isActive ? 'text-slate-900 font-bold' : 'text-slate-400'
-                    }`}
-                  >
-                    {d.month}
-                  </span>
-                ))}
+                {baseChartData.map((d, index) => {
+                  const isActive = currentMetrics.isMonthActive(d.month, index);
+                  return (
+                    <span
+                      key={d.month}
+                      className={`text-[11px] transition-colors duration-300 flex-1 text-center select-none ${
+                        isActive ? 'text-slate-900 font-bold' : 'text-slate-400 font-medium'
+                      }`}
+                    >
+                      {d.month}
+                    </span>
+                  );
+                })}
               </div>
             </div>
           </div>
